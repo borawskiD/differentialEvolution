@@ -6,13 +6,14 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Task {
-    public double min = -10000;
-    public double max = 10000;
+    public final double MIN = -10000;
+    public final double MAX = 10000;
+    public final int SAMPLE_SIZE = 4;
+    public final int POPULATION_SIZE = 100;
     public final int ITERATIONS = 1;
-    public final int populationSize = 100;
     public final double F = 0.3;
     public final double CR = 0.8;
-    public List<Double[]> population = new ArrayList<>(populationSize);
+    public List<Double[]> population = new ArrayList<>(POPULATION_SIZE);
     public double bestValue;
     public Double[] bestPopulation;
 
@@ -24,17 +25,17 @@ public class Task {
             fullCycle();
         }
 
-        System.out.println("Output of the algorithm:");
+        System.out.println("Output of the algorithm");
         System.out.println("The best value:");
         System.out.println(bestValue);
-        System.out.println("The best gens:");
-        printPopulation(bestPopulation);
+        System.out.println("The best genes:");
+        printSample(bestPopulation);
     }
     public void fullCycle(){
-        for(int i = 0; i < populationSize; i++){
+        for(int i = 0; i < POPULATION_SIZE; i++){
             System.out.println("****");
             List<Double[]> currentPopulation = select(i);
-            displayPopulation(currentPopulation);
+            printPopulation(currentPopulation);
             Double[] newGenotypes = mutate(currentPopulation);
             Double[] crossedGenotype = crossOver(currentPopulation,newGenotypes);
             System.out.println("F_crossed = " + F(crossedGenotype));
@@ -50,18 +51,23 @@ public class Task {
             System.out.println("****");
         }
     }
-    public Double F(Double[] values){
-        return values[0] + values[1] - 3 * values[2];
+    public Double[] generateSample(){
+        Double[] sample = new Double[SAMPLE_SIZE];
+        for (int i = 0; i < sample.length; i++) {
+            sample[i] = ThreadLocalRandom.current().nextDouble(MIN, MAX);
+        }
+        return sample;
     }
+
     public void initializePopulation(){
-        for (int i = 0; i < populationSize; i++) {
+        for (int i = 0; i < POPULATION_SIZE; i++) {
             population.add(generateSample());
         }
     }
     public Double[] mutate(List<Double[]> currentGenotypes){
-        Double[] mutationScore = new Double[3];
-        for(int i = 0; i<3; i++){
-            mutationScore[i] = currentGenotypes.get(0)[i] + F * (currentGenotypes.get(1)[i] - currentGenotypes.get(1)[2]);
+        Double[] mutationScore = new Double[SAMPLE_SIZE];
+        for(int i = 0; i<SAMPLE_SIZE; i++){
+            mutationScore[i] = currentGenotypes.get(0)[i] + F * (currentGenotypes.get(1)[i] - currentGenotypes.get(2)[i] - currentGenotypes.get(3)[i]);
         }
         for (Double aDouble : mutationScore) {
             System.out.print(aDouble + " ");
@@ -70,14 +76,14 @@ public class Task {
         return mutationScore;
     }
     public Double[] crossOver(List<Double[]> currentGenotypes, Double[] newGenotypes){
-        Double[] crossedGenotype = new Double[3];
+        Double[] crossedGenotype = new Double[SAMPLE_SIZE];
         for(int i = 0; i < newGenotypes.length; i++){
             double x = ThreadLocalRandom.current().nextDouble(0, 1);
             if(x <= CR) crossedGenotype[i] = newGenotypes[i];
             else crossedGenotype[i] = currentGenotypes.get(0)[i];
         }
-        System.out.println("Po krzyzowce: ");
-        for (int i = 0; i < 3; i++) {
+        System.out.println("After crossover:");
+        for (int i = 0; i < SAMPLE_SIZE; i++) {
             System.out.print(crossedGenotype[i] + " ");
         }
         System.out.print("\n");
@@ -87,30 +93,35 @@ public class Task {
         Random r = new Random();
         int secondSample;
         int thirdSample;
+        int fourthSample;
         do{
-            secondSample = r.nextInt(populationSize);
-            thirdSample = r.nextInt(populationSize);
-        }while(currentIndex == secondSample || currentIndex == thirdSample || secondSample == thirdSample);
+            secondSample = r.nextInt(POPULATION_SIZE);
+            thirdSample = r.nextInt(POPULATION_SIZE);
+            fourthSample = r.nextInt(POPULATION_SIZE);
+        }while(currentIndex == secondSample || currentIndex == thirdSample || currentIndex == fourthSample || secondSample == thirdSample || thirdSample == fourthSample);
         List<Double[]> output = new ArrayList<>();
         output.add(population.get(currentIndex));
         output.add(population.get(secondSample));
         output.add(population.get(thirdSample));
+        output.add(population.get(fourthSample));
         return output;
     }
-    public void displayPopulation(List<Double[]> populationToDisplay){
+
+    public Double F(Double[] x){
+        return Math.pow(x[0],2) - 2 * Math.pow(x[1],2) * Math.pow(x[2],2) + 3 * Math.pow(x[0],2) * Math.pow(x[3], 2);
+    }
+
+
+    public void printPopulation(List<Double[]> populationToDisplay){
         for (Double[] doubles : populationToDisplay) {
-            int i = population.indexOf(doubles);
-            System.out.println(i + ". " + doubles[0] + " " + doubles[1] + " " + doubles[2]);
+            for (Double aDouble : doubles) {
+                System.out.print(aDouble + " ");
+            }
+            System.out.println();
         }
     }
-    public Double[] generateSample(){
-        double x1 = ThreadLocalRandom.current().nextDouble(min, max);
-        double x2 = ThreadLocalRandom.current().nextDouble(min, max);
-        double x3 = ThreadLocalRandom.current().nextDouble(min, max);
-        return new Double[]{x1,x2,x3};
-    }
-    public void printPopulation(Double[] gens){
-        for (Double gen : gens) {
+    public void printSample(Double[] genes){
+        for (Double gen : genes) {
             System.out.print(gen + " ");
         }
         System.out.print("\n");
